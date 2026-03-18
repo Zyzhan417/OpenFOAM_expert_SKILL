@@ -1,6 +1,6 @@
 # OpenFOAM Expert
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/yourusername/openfoam-expert)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/Zyzhan417/OpenFOAM_expert_SKILL)
 [![OpenFOAM](https://img.shields.io/badge/OpenFOAM-9-green.svg)](https://openfoam.org/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
@@ -20,7 +20,7 @@
 
 ```bash
 # 克隆仓库
-git clone https://github.com/yourusername/openfoam-expert.git
+git clone https://github.com/Zyzhan417/OpenFOAM_expert_SKILL.git
 cd openfoam-expert
 
 # 安装依赖
