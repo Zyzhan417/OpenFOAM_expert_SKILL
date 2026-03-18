@@ -1,7 +1,7 @@
 # OpenFOAM Expert
 
 [![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/Zyzhan417/OpenFOAM_expert_SKILL)
-[![OpenFOAM](https://img.shields.io/badge/OpenFOAM-9-green.svg)](https://openfoam.org/)
+[![OpenFOAM](https://img.shields.io/badge/OpenFOAM-13-green.svg)](https://openfoam.org/version/13/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 **OpenFOAM 源码专家技能** - 为 AI 助手提供 OpenFOAM 代码检索、分析和修改建议能力。
