@@ -232,48 +232,57 @@ class CodeAccessor:
         
         # 编译正则表达式
         try:
-            regex = re.compile(pattern, re.IGNORECASE)
+            regex = re.compile(pattern, re.IGNORECASE | re.DOTALL)
         except re.error:
             return results
-            
+
         # 搜索文件
         for search_dir in search_dirs:
             if not os.path.exists(search_dir):
                 continue
-                
+
             for root, dirs, files in os.walk(search_dir):
                 # 跳过隐藏目录
                 dirs[:] = [d for d in dirs if not d.startswith('.')]
-                
+
                 for file in files:
                     # 检查文件类型
                     if not any(file.endswith(ext) for ext in extensions):
                         continue
-                        
+
                     file_path = os.path.join(root, file)
                     try:
                         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                            lines = f.readlines()
-                            
-                        for i, line in enumerate(lines):
-                            if regex.search(line):
-                                # 获取上下文
-                                start = max(0, i - 2)
-                                end = min(len(lines), i + 3)
-                                context = [lines[j].rstrip('\n') for j in range(start, end)]
-                                
-                                results.append(SearchResult(
-                                    file_path=os.path.relpath(file_path, base_dir),
-                                    line_number=i + 1,
-                                    content=line.rstrip('\n'),
-                                    context=context
-                                ))
-                                
-                                if len(results) >= max_results:
-                                    return results
+                            content = f.read()
+                            lines = content.split('\n')
+
+                        # 多行搜索
+                        for match in regex.finditer(content):
+                            # 计算匹配起始位置的行号
+                            pos = match.start()
+                            line_num = content[:pos].count('\n') + 1
+
+                            # 获取匹配内容（取第一行或前80个字符）
+                            matched_text = match.group(0)
+                            first_line = matched_text.split('\n')[0][:80]
+
+                            # 获取上下文
+                            start = max(0, line_num - 3)
+                            end = min(len(lines), line_num + 3)
+                            context = lines[start:end]
+
+                            results.append(SearchResult(
+                                file_path=os.path.relpath(file_path, base_dir),
+                                line_number=line_num,
+                                content=first_line,
+                                context=context
+                            ))
+
+                            if len(results) >= max_results:
+                                return results
                     except Exception:
                         continue
-                        
+
         return results
     
     def read_file(self, 
@@ -405,8 +414,13 @@ class CodeAccessor:
         if class_name in self._class_location_cache:
             return self._class_location_cache[class_name]
         
-        # 搜索类定义
-        pattern = rf"class\s+{class_name}\s*(:|\{{)"
+        # 搜索类定义 - 支持跨行的格式
+        # 格式1: class ClassName : public BaseClass {
+        # 格式2: class ClassName\n:\n    public BaseClass\n{
+        # 格式3: class ClassName {
+        # 格式4: class ClassName\n{\n
+        # 格式5: template<...> class ClassName
+        pattern = rf"class\s+{class_name}\s*[\s\S]{{0,50}}?(:|\{{)"
         results = self.search_code(pattern, file_types=".H", max_results=5)
         
         if results:

@@ -28,10 +28,6 @@ import io
 from typing import Dict, List, Optional, Any
 from enum import Enum
 
-# Windows平台设置stdout为UTF-8编码
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 
 class OutputFormat(Enum):
     """输出格式枚举"""

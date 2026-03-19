@@ -348,10 +348,10 @@ class OpenFOAMRouter:
         
         # 根据参数调用分析方法
         if args.get('params'):
-            result["parameters"] = analyzer.get_parameters(name)
+            result["parameters"] = analyzer.analyze_parameters(name)
             
         if args.get('examples'):
-            result["examples"] = analyzer.find_examples(name)
+            result["examples"] = analyzer.find_usage_examples(name)
             
         if args.get('suggest'):
             suggestions = analyzer.generate_suggestions(name, args['suggest'])

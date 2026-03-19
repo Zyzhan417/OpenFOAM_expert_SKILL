@@ -26,10 +26,6 @@ import io
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Any
 
-# Windows平台设置stdout为UTF-8编码
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
 # 添加核心模块路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -662,7 +658,7 @@ public:
     virtual bool write();
 }};
 
-} // End namespace Foam
+}} // End namespace Foam
 
 #endif
 '''
