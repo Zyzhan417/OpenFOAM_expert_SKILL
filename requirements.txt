@@ -1,0 +1,11 @@
+# OpenFOAM Expert Skill Dependencies
+# This skill uses only Python standard library
+# No additional packages required
+
+# Optional: For enhanced MCP support (future)
+# mcp>=1.0.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# black>=23.0.0
+# mypy>=1.0.0
