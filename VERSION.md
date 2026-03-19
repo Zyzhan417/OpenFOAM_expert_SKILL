@@ -1,19 +1,17 @@
 # OpenFOAM Expert Skill 版本信息
 
-**当前版本**: v2.1.0 (User Level)
-**更新日期**: 2026-03-10
+**当前版本**: v2.2.0 (User Level)
+**更新日期**: 2026-03-18
 
 ## 版本历史
 
-### v2.1.0 (User Level) - 2026-03-10 ✅
-- ✅ 添加统一版本管理 (`scripts/core/version.py`)
-- ✅ 所有脚本支持 `--version` 参数
-- ✅ 增强 `code_accessor.py` 错误处理和调试模式
-- ✅ 重构 `SKILL.md` 文档结构，符合最佳实践
-- ✅ 添加 `references/usage-reference.md` 详细参数参考
-- ✅ 添加 `references/modification-workflows.md` 修改工作流详解
-- ✅ 修复 `test_skill.py` 硬编码路径问题
-- ✅ 使用 `{SKILL_ROOT}` 占位符替代硬编码路径
+### v2.2.0 (User Level) - 2026-03-18 ✅
+- ✅ 新增 MCP Server 封装，支持 Claude/Cursor 直接调用
+- ✅ 新增统一命令路由器 (router.py)
+- ✅ 新增缓存管理模块 (cache_manager.py)
+- ✅ 新增输出格式化器，支持 AI 友好格式
+- ✅ 优化 CLI 脚本，消除硬编码路径
+- ✅ 改进错误处理和跨平台兼容性
 
 **新特性**：
 - **统一版本管理**：所有脚本版本号集中管理，通过 `scripts/core/version.py` 维护
@@ -68,10 +66,10 @@ python scripts/inheritance_analyzer.py --version
 输出示例：
 ```
 ============================================================
-  openfoam-expert v2.1.0
+  openfoam-expert v2.2.0
 ============================================================
-  Release Date: 2026-03-10
-  OpenFOAM Version: 9
+  Release Date: 2026-03-18
+  OpenFOAM Version: 13
   Skill Root: /path/to/skill
   Source Files: 17100 (8762 .H + 8338 .C)
 ============================================================
@@ -139,5 +137,5 @@ openfoam-expert/
 
 ---
 
-**最后更新**: 2026-03-10
-**维护状态**: v2.1.0 活跃维护
+**最后更新**: 2026-03-18
+**维护状态**: v2.2.0 活跃维护

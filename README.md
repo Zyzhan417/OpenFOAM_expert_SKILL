@@ -56,9 +56,6 @@ python scripts/router.py model --type turbulence --name kEpsilon
 
 # 边界条件分析
 python scripts/router.py boundary --name fixedValue --params
-
-# 搜索代码
-python scripts/router.py search --pattern "class.*Mesh" --types .H
 ```
 
 ### MCP Server 配置
@@ -88,8 +85,7 @@ python scripts/router.py search --pattern "class.*Mesh" --types .H
 | `inheritance` | 类继承分析 | `--class fvMesh --chain` |
 | `boundary` | 边界条件分析 | `--name fixedValue --params` |
 | `model` | 物理模型分析 | `--type turbulence --name kEpsilon` |
-| `search` | 代码搜索 | `--pattern "class.*Mesh"` |
-| `suggest` | 修改建议 | `--target boundary --name fixedValue --action create` |
+| `modifier` | 修改建议 | `--target boundary --name fixedValue --action create` |
 | `version` | 版本信息 | - |
 | `clear-cache` | 清除缓存 | - |
 

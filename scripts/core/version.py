@@ -9,7 +9,7 @@ OpenFOAM Expert Skill 版本管理模块
 __version__ = "2.2.0"
 __skill_name__ = "openfoam-expert"
 __release_date__ = "2026-03-18"
-__openfoam_version__ = "9"
+__openfoam_version__ = "13"
 
 # 版本历史
 VERSION_HISTORY = {
