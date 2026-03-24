@@ -1,9 +1,9 @@
 ---
 name: openfoam-expert
 description: |
-  OpenFOAM source code retrieval and analysis skill. Trigger when working on OpenFOAM cases and needing to: (1) look up valid fvModel/fvConstraint/boundary condition types and their dictionary syntax, (2) understand how a specific class is implemented (source code location, inheritance, member functions), (3) verify correct usage of coded/C++ constructs in case files (fvOptions, coded boundary conditions, function objects), (4) find the source code for any OpenFOAM class using regex search, (5) generate dictionary templates with correct required keywords by cross-referencing .H file Usage examples and code template files. ALWAYS verify required keywords against source code templates (e.g., codedFvModelTemplate.C) and .H file Usage blocks before generating any dictionary template. Does NOT modify files directly - returns analysis results for the caller to apply.
+  OpenFOAM CFD toolbox expert for dictionary validation, source code lookup, and case debugging. Use this skill when: configuring fvModels/fvConstraints/boundary conditions (especially coded/dynamic variants like codedFixedValue, codedFvModel), debugging FOAM FATAL IO ERRORs related to missing keywords or incorrect syntax, understanding class inheritance or implementation details, or generating dictionary templates. ALWAYS cross-reference with .H file Usage blocks and codeTemplates (e.g., codedFvModelTemplate.C) before generating templates - never rely on memory alone. Returns analysis results; does not modify files.
   |
-  OpenFOAM 源码检索与分析技能。在以下场景触发：(1) 需要查找合法的fvModel/fvConstraint/边界条件类型及其字典语法，(2) 需要了解某个类的实现细节（源码位置、继承关系、成员函数），(3) 需要验证case文件中coded/C++写法的正确性（fvOptions、coded边界条件、function objects），(4) 需要用正则表达式搜索OpenFOAM源码，(5) 需要生成字典模板并确保必填关键字完整正确。生成字典模板时必须对照源码模板文件和.H文件中的Usage示例验证。不直接修改文件，仅返回分析结果供调用方使用。
+  OpenFOAM 专家技能，用于字典验证、源码检索和算例调试。在以下场景触发：配置 fvModel/fvConstraint/边界条件（尤其是 coded/dynamic 类型如 codedFixedValue、codedFvModel）、调试 FOAM FATAL IO ERROR（缺失关键字或语法错误）、理解类的继承与实现细节、生成字典模板。生成模板前**必须**对照 .H 文件的 Usage 块和 codeTemplates（如 codedFvModelTemplate.C）进行验证——切勿仅凭记忆。返回分析结果，不直接修改文件。
 ---
 
 # OpenFOAM Expert
@@ -304,6 +304,7 @@ mcp_call_tool(
 - `templates/boundary_modification.md` - 边界条件修改模板
 - `templates/model_modification.md` - 物理模型修改模板
 - `templates/fvModel_modification.md` - fvModel源项修改模板（含coded fvModel用法）
+- `templates/parametric_case_guide.md` - 参数化case与时变边界条件完整指南
 
 ## Quick Reference
 
@@ -311,13 +312,15 @@ mcp_call_tool(
 
 | 用户说... | 执行... |
 |-----------|---------|
-| "某某类继承自哪里" | `python scripts/inheritance_analyzer.py --class ClassName --chain` |
-| "创建新的边界条件" | `python scripts/code_modifier.py --target boundary --name BaseBC --action create` |
-| "kEpsilon模型的参数" | `python scripts/model_analyzer.py --type turbulence --name kEpsilon` |
-| "如何扩展某某类" | `python scripts/code_modifier.py --target class --name ClassName --action extend` |
-| "如何使用coded fvModel" | 查看 `templates/fvModel_modification.md` 或搜索 `codedFvModel` |
+| "某某类继承自哪里" | `python scripts/router.py inheritance --class ClassName --chain` |
+| "FOAM FATAL IO ERROR: xxx not specified" | 搜索 `xxx` 关键字读取位置 + 查看对应 .H 文件的 Usage 块 |
+| "codedFixedValue 怎么写" | 查看 `templates/parametric_case_guide.md` 或搜索 `codedFixedValueFvPatchField` |
+| "创建新的边界条件" | `python scripts/router.py boundary --name BaseBC` |
+| "kEpsilon模型的参数" | `python scripts/router.py model --type turbulence --name kEpsilon` |
+| "fvOptions 语法是什么" | 搜索 `fvOptions` 查看源码 + `templates/fvModel_modification.md` |
 | "验证字典写法是否正确" | 对照 .H 文件 Usage 块 + codeTemplates 中的模板文件 |
 | "这个参数是什么意思" | 搜索参数读取代码 + 查看 tutorial 配置 |
+| "参数化 OpenFOAM case" | 查看 `templates/parametric_case_guide.md` |
 
 ### 输出格式说明
 
@@ -369,6 +372,6 @@ A: 运行 `ofa clear-cache` 或删除 `.openfoam_cache` 目录。
 
 ---
 
-**版本**: 2.3.0  
-**更新日期**: 2026-03-24  
+**版本**: 2.4.0  
+**更新日期**: 2026-03-25  
 **维护状态**: 活跃维护
