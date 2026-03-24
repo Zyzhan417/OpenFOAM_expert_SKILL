@@ -165,6 +165,11 @@ class OpenFOAMRouter:
             'description': '代码修改建议',
             'analyzer': 'code_modifier',
             'class': 'CodeModifier'
+        },
+        'search': {
+            'description': '源码搜索 (regex pattern)',
+            'analyzer': None,
+            'class': None
         }
     }
     
@@ -250,9 +255,13 @@ class OpenFOAMRouter:
                 return cached
         
         try:
-            # 获取分析器并执行
-            analyzer = self._get_analyzer(command)
-            result = self._dispatch_to_analyzer(analyzer, command, args)
+            # search 命令不需要分析器
+            if command == 'search':
+                result = self._execute_search(args)
+            else:
+                # 获取分析器并执行
+                analyzer = self._get_analyzer(command)
+                result = self._dispatch_to_analyzer(analyzer, command, args)
             
             # 确保结果有 success 字段
             if "success" not in result:
@@ -292,8 +301,46 @@ class OpenFOAMRouter:
             return self._execute_model(analyzer, args)
         elif command == 'modifier':
             return self._execute_modifier(analyzer, args)
+        elif command == 'search':
+            return self._execute_search(args)
         else:
             raise ValueError(f"未实现的命令: {command}")
+
+    def _execute_search(self, args: dict) -> dict:
+        """执行源码搜索"""
+        pattern = args.get('pattern')
+        if not pattern:
+            return {"success": False, "error": "缺少 --pattern 参数"}
+
+        file_types = args.get('type', '.H,.C')
+        scope = args.get('scope', 'source')
+        max_results = args.get('max', 50)
+
+        try:
+            results = self.accessor.search_code(
+                pattern=pattern,
+                file_types=file_types,
+                scope=scope,
+                max_results=max_results
+            )
+
+            return {
+                "success": True,
+                "pattern": pattern,
+                "file_types": file_types,
+                "scope": scope,
+                "count": len(results),
+                "results": [
+                    {
+                        "file_path": r.file_path,
+                        "line_number": r.line_number,
+                        "content": r.content[:200],
+                    }
+                    for r in results
+                ]
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
     
     def _execute_inheritance(self, analyzer, args: dict) -> dict:
         """执行继承分析"""
@@ -359,7 +406,16 @@ class OpenFOAMRouter:
             
         # 默认获取基本信息
         if not any([args.get('params'), args.get('examples'), args.get('suggest')]):
-            result.update(analyzer.analyze(name))
+            info = analyzer.find_boundary_condition(name)
+            if info:
+                result["file_path"] = info.file_path
+                result["base_class"] = info.base_class
+                result["description"] = info.description
+                result["parameters"] = info.parameters
+                result["required_parameters"] = info.required_parameters
+                result["member_functions"] = info.member_functions
+            else:
+                return {"success": False, "error": f"未找到边界条件: {name}"}
             
         return result
     
@@ -482,8 +538,11 @@ def main():
   boundary       边界条件分析
   model          物理模型分析
   modifier       代码修改建议
+  search         源码搜索 (正则表达式)
 
 示例:
+  %(prog)s search --pattern "codedFvModel" --type .H
+  %(prog)s search --pattern "class.*fvModel.*public" --type .H
   %(prog)s inheritance --class fvMesh --chain
   %(prog)s model --type turbulence --name kEpsilon
   %(prog)s boundary --name fixedValue --params
@@ -494,6 +553,14 @@ def main():
     parser.add_argument('command', nargs='?', 
                         choices=list(OpenFOAMRouter.COMMANDS.keys()) + ['help', 'version', 'clear-cache'],
                         help='要执行的命令')
+
+    # 搜索命令参数
+    parser.add_argument('--pattern', type=str,
+                        help='搜索模式 (正则表达式)')
+    parser.add_argument('--scope', type=str, default='source',
+                        help='搜索范围 (source/tutorials/applications/all)')
+    parser.add_argument('--max', type=int, default=50,
+                        help='最大结果数')
     parser.add_argument('--root', type=str,
                         help='OpenFOAM src 目录路径')
     parser.add_argument('--mode', choices=['auto', 'mcp', 'local'], default='auto',
@@ -585,6 +652,12 @@ def main():
         cmd_args['target'] = args.target
     if args.action:
         cmd_args['action'] = args.action
+    if args.pattern:
+        cmd_args['pattern'] = args.pattern
+    if args.scope:
+        cmd_args['scope'] = args.scope
+    if args.max:
+        cmd_args['max'] = args.max
     
     # 执行命令
     result = router.execute(args.command, cmd_args)

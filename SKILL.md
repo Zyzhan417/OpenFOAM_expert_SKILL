@@ -1,9 +1,9 @@
 ---
 name: openfoam-expert
 description: |
-  OpenFOAM source code expert skill for efficient retrieval, analysis, and understanding of the OpenFOAM codebase. Supports class inheritance analysis, boundary condition analysis, and physics model analysis with standardized modification suggestions. Use when users need to find solver implementations, trace class inheritance, understand boundary conditions, or get code modification guidance.
+  OpenFOAM source code retrieval and analysis skill. Trigger when working on OpenFOAM cases and needing to: (1) look up valid fvModel/fvConstraint/boundary condition types and their dictionary syntax, (2) understand how a specific class is implemented (source code location, inheritance, member functions), (3) verify correct usage of coded/C++ constructs in case files (fvOptions, coded boundary conditions, function objects), (4) find the source code for any OpenFOAM class using regex search, (5) generate dictionary templates with correct required keywords by cross-referencing .H file Usage examples and code template files. ALWAYS verify required keywords against source code templates (e.g., codedFvModelTemplate.C) and .H file Usage blocks before generating any dictionary template. Does NOT modify files directly - returns analysis results for the caller to apply.
   |
-  OpenFOAM 源码专家技能，用于高效检索、分析和理解 OpenFOAM 代码库。支持类继承分析、边界条件分析、物理模型分析，并生成标准化代码修改建议。当用户需要查找求解器实现、追踪类继承关系、理解边界条件、查找湍流/多相流/热物理模型，或需要代码解读和修改建议时使用此技能。
+  OpenFOAM 源码检索与分析技能。在以下场景触发：(1) 需要查找合法的fvModel/fvConstraint/边界条件类型及其字典语法，(2) 需要了解某个类的实现细节（源码位置、继承关系、成员函数），(3) 需要验证case文件中coded/C++写法的正确性（fvOptions、coded边界条件、function objects），(4) 需要用正则表达式搜索OpenFOAM源码，(5) 需要生成字典模板并确保必填关键字完整正确。生成字典模板时必须对照源码模板文件和.H文件中的Usage示例验证。不直接修改文件，仅返回分析结果供调用方使用。
 ---
 
 # OpenFOAM Expert
@@ -194,6 +194,43 @@ python /absolute/path/to/skill/scripts/inheritance_analyzer.py --class fvMesh --
 
 ## Workflow
 
+### 验证字典模板的强制流程
+
+**教训（2026-03-24）**：coded fvModel 模板中遗漏了 `cellZone`（必填项），
+导致用户运行时 `FOAM FATAL IO ERROR: cellZone not specified`。根因是模板编写时
+未严格对照源码中的模板文件和 .H 文件中的官方 Usage 示例。
+
+生成任何 OpenFOAM 字典模板时，**必须**按以下顺序验证：
+
+```
+Step 1: 找到 .H 文件中的 Usage/Description 示例
+    └─ 这是最权威的字典写法参考
+       例: codedFvModel.H 第30-64行的 \verbatim 块
+
+Step 2: 找到对应的代码模板文件 (etc/codeTemplates/dynamicCode/)
+    └─ 确认模板构造函数中读取了哪些字典关键字
+       例: codedFvModelTemplate.C 中 zone_(mesh, coeffs(dict)) 要求 cellZone
+
+Step 3: 确认 coeffs(dict) 的范围
+    └─ fvModel 通常查找 <type>Coeffs 子字典，找不到则使用顶层字典
+       例: coded 类型查找 codedCoeffs 子字典，或使用顶层字典本身
+
+Step 4: 检查基类构造函数是否有额外的必读关键字
+    └─ 例: fvCellZone 构造函数要求 cellZone, fvConstraint 基类可能要求其他项
+
+Step 5: 列出所有必填项，写入模板
+    └─ 不要从"通用 fvModel 知识"推断某个类型的关键字
+       不要将其他 fvModel 类型的关键字（如 selectionMode）套用到 coded 类型
+```
+
+**已知的跨类型关键字混淆**：
+
+| 关键字 | 实际适用的类型 | 不适用的类型 |
+|--------|---------------|-------------|
+| `selectionMode` | 多数 fvModel/fvConstraint | `coded`（使用 `cellZone`） |
+| `cellZone` | `coded`, 部分 fvModel | 不使用 zone 的 fvModel |
+| `field` | `coded` | 不需要指定场名的 fvModel |
+
 ### 标准工作流程
 
 ```
@@ -211,7 +248,7 @@ Step 3: 结果解读
     └─ 提取关键信息
 
 Step 4: 修改建议
-    ├─ 生成代码模板
+    ├─ 生成代码模板（按上方验证流程）
     └─ 提供实施步骤
 
 Step 5: 实施指导
@@ -252,11 +289,21 @@ mcp_call_tool(
 - `references/usage-reference.md` - 详细参数说明和使用示例
 - `references/modification-workflows.md` - 完整修改工作流程和案例
 
+### 关键源码位置速查
+
+| 组件 | 源码路径 | 说明 |
+|------|----------|------|
+| coded fvModel | `src/fvModels/general/codedFvModel/` | 动态代码生成fvModel |
+| coded 模板 | `etc/codeTemplates/dynamicCode/codedFvModelTemplate.*` | 代码生成模板 |
+| fvModel 基类 | `src/fvModels/fvModel/` | fvModel框架基础 |
+| 边界条件模板 | `etc/codeTemplates/dynamicCode/codedFvPatchFieldTemplate.*` | 动态边界条件模板 |
+
 ### 代码模板
 
 - `templates/solver_modification.md` - 求解器修改模板
 - `templates/boundary_modification.md` - 边界条件修改模板
 - `templates/model_modification.md` - 物理模型修改模板
+- `templates/fvModel_modification.md` - fvModel源项修改模板（含coded fvModel用法）
 
 ## Quick Reference
 
@@ -268,6 +315,8 @@ mcp_call_tool(
 | "创建新的边界条件" | `python scripts/code_modifier.py --target boundary --name BaseBC --action create` |
 | "kEpsilon模型的参数" | `python scripts/model_analyzer.py --type turbulence --name kEpsilon` |
 | "如何扩展某某类" | `python scripts/code_modifier.py --target class --name ClassName --action extend` |
+| "如何使用coded fvModel" | 查看 `templates/fvModel_modification.md` 或搜索 `codedFvModel` |
+| "验证字典写法是否正确" | 对照 .H 文件 Usage 块 + codeTemplates 中的模板文件 |
 | "这个参数是什么意思" | 搜索参数读取代码 + 查看 tutorial 配置 |
 
 ### 输出格式说明
@@ -320,6 +369,6 @@ A: 运行 `ofa clear-cache` 或删除 `.openfoam_cache` 目录。
 
 ---
 
-**版本**: 2.2.0  
-**更新日期**: 2026-03-18  
+**版本**: 2.3.0  
+**更新日期**: 2026-03-24  
 **维护状态**: 活跃维护
